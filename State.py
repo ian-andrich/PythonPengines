@@ -1,3 +1,6 @@
+import Collections
+
+
 class State(object):
     ''' State Machine Class.
         Initializes to start_state, and optionally an iterator of states, or
@@ -45,3 +48,6 @@ class State(object):
         else:
             raise
 
+
+class StateError(Exception):
+    pass

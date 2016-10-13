@@ -1,5 +1,6 @@
 from State import State
 from Builder import PengineBuilder
+from Query import Query
 import copy
 
 
@@ -13,15 +14,27 @@ class Pengine(object):
         else:
             self.po = copy.deepcopy(builder)
         self.slave_limit = slave_limit
-        self.state = PengineState()
+        self.state = State()
 
         # Initialize state transitions
         transitions = [("not_created", True, self.create, "idle"),
-                       ("idle", self.currentQuery, self.runquery, "ask")]
+                       ("idle", self.hasCurrentQuery, self.runquery, "ask"),
+                       ("ask", self.queryHasNext, self.__next__, "ask")]
 
+    def hasCurrentQuery(self):
+        if self.currentQuery is False:
+            return False
+        return True
+
+    def queryHasNext(self):
+        pass
 
     def ask(self, query):
-
+        if self.currentQuery is not None:
+            raise StateError("Have not extracted all answers " +
+                             "from previous query.")
+        self.currentQuery = Query(self, query, True)
+        return self.currentQuery
 
     def create(self):
         pass
@@ -55,13 +68,4 @@ class Pengine(object):
 
     def penginePost(self, url, contentType, body):
         pass
-
-
-
-class PengineState(State):
-    def __init__(self):
-        super().__init__("not_created", states={"not_created",
-                                                "idle",
-                                                "ask",
-                                                "destroyed"})
 
