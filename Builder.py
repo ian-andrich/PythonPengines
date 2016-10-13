@@ -44,7 +44,12 @@ class PengineBuilder(object):
 
         return json.dumps(data)
 
-    def getRequestBodyAsk(self, id, ask):
+    def getRequestBodyAsk(self, ask, id=None):
+        '''
+        ask::String The prolog query.
+        id::String The id of the pengine id that is transmitting.
+            Currently not used.
+        '
         return "ask({},[]).".format(ask)
 
     def dumpDebugState(self):

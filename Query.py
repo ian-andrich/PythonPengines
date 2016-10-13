@@ -9,11 +9,11 @@ This library implements the basic logic for the Pengine classes.
 '''
 
 class Query(object):
-    def __init__(self, pengine, ask, queryMaster):
+    def __init__(self, pengine):
         '''pengine :: Pengine, ask :: String, queryMaster :: Boolean'''
         self.availProofs = None
-        self.hasMore = None
-        self.pengine = None
+        self.hasMore = True
+        self.pengine = pengine
 
     def addNewData(self, newDataPoints):
         '''newDataPoints :: JSON'''
@@ -29,7 +29,22 @@ class Query(object):
         pass
 
     def noMore(self):
-        pass
+        if not self.hasMore:
+            return
+
+        self.hasMore = False
+        if not self.availProofs:
+            p.iAmFinished(self)
 
     def stop(self):
         pass
+
+    def addNewData(self, data):
+        '''
+        Returns True if we __think__ we have more data.
+        data::String
+        '''
+        for item in newDataPoints:
+            raise
+            pass
+        return self.hasMore or not self.availProofs.isEmpty()
