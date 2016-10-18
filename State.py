@@ -9,7 +9,7 @@ class State(object):
         Errors: ValueError is raised if a transition is not allowed.
     '''
     def __init__(self, start_state, transitions=None):
-        self._current_state = start_state  # Initialize a starting state.
+        self.current_state = start_state  # Initialize a starting state.
         self.transitions = Collections.defaultdict(list)
 
         # Initialize transitions if passed.
@@ -32,7 +32,7 @@ class State(object):
         self.transitions[start].append((check, action, end))
 
     def run(self):
-        current_state = self._current_state
+        current_state = self.current_state
         possible_transitions = self.transitions[current_state]
         # Perform checks until a valid transition is found.
         # Perform the action, then change the state.
@@ -43,7 +43,7 @@ class State(object):
                 should_continue = check
             if should_continue:
                 action.__call__()
-                self._current_state = end
+                self.current_state = end
         # Raise StateTransitionError if no valid checks.
         else:
             raise

@@ -1,4 +1,5 @@
 import json
+import urllib.urlparse as urlparse
 import sys
 
 
@@ -22,6 +23,7 @@ class PengineBuilder(object):
         self.urlserver = urlserver
         self.srctext = srctext
         self.srcurl = srcurl
+        self.request_body = self.getRequestBodyCreate()
 
     def getRequestBodyCreate(self):
         '''Returns the string to be passed to the Pengine, according to the
@@ -49,7 +51,7 @@ class PengineBuilder(object):
         ask::String The prolog query.
         id::String The id of the pengine id that is transmitting.
             Currently not used.
-        '
+        ''''
         return "ask({},[]).".format(ask)
 
     def dumpDebugState(self):
@@ -72,3 +74,20 @@ class PengineBuilder(object):
          "--- end PengineBuilder ---"]
         for line in serialized:
             sys.stderr.write(line)
+
+    def getActualURL(self, action, id):
+        '''
+        Parses in the relative information necessary to perform a query on
+        Pengines into a full URL form.
+
+        action::String -> Action to be performed "send", "post", etc.
+        id::String -> The id of the pengine in question.
+        '''
+        # Verify server url is set, otherwise raise PengineNotReadyException
+        if self.urlserver is None:
+            raise PengineNotReadyException("Cannot get actual URL without \
+                                           setting the server")
+        relative = "/pengine/{1}?format=json&id={2}".format(action, self.id)
+        uribase = urlparse(self.urlserver)
+        uribase.path = relative
+        return uribase.geturl()

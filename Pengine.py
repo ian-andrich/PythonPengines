@@ -5,18 +5,18 @@ import copy
 import requests
 import json
 
+
 class Pengine(object):
     def __init__(self, builder=None, slave_limit=-1):
         '''
-        This Pengine object is used to run one or more queries of the Prolog
-        Knowledge base set in the PengineBuilder.
-
-        builder::None || PengineBuilder  Uses a new PengineBuilder with default settings,
-        otherwise use the supplied PengineBuilder initialized with the desired
-        settings.  A deepcopy is performed to preserve state.
-
-        slave_limit::Int Sets limits on the number of slaves that
-        this pengine can have.'''
+        This Pengine object is used to run one or more queries of the
+        Prolog Knowledge base set in the PengineBuilder.  builder::None ||
+        PengineBuilder  Uses a new PengineBuilder with default settings,
+        otherwise use the supplied PengineBuilder initialized with the
+        desired settings.  A deepcopy is performed to preserve state.
+        slave_limit::Int Sets limits on the number of slaves that this
+        pengine can have.
+        '''
         self.availOutput = None
         self.currentQuery = None
         self.pengineID = None
@@ -25,23 +25,15 @@ class Pengine(object):
         else:
             self.po = copy.deepcopy(builder)
         self.slave_limit = slave_limit
-        self.state = State()
         self.ask = None
 
         # Initialize state transitions
+        self.state = State()
         transitions = [("not_created", True, self.create, "idle"),
-                       ("idle", self.hasCurrentQuery, self._ask, "ask"),
+                       ("idle", self.hasCurrentQuery, self.ask, "ask"),
                        ("ask", self.queryHasNext, self.__next__, "ask")]
 
-    def hasCurrentQuery(self):
-        if self.currentQuery is False:
-            return False
-        return True
-
-    def queryHasNext(self):
-        pass
-
-    def _ask(self):
+    def ask(self):
         self.currentQuery = Query(self, query, True)
         try:
             answer = self.penginePost(self.po.urlserver,
@@ -54,21 +46,30 @@ class Pengine(object):
         except SyntaxError as e:
             pass
 
-
     def doAsk(self, query, ask):
+        # Check to make sure state is idle and can handle queries.
+        if self.state.current_state != "idle":
+            raise PengineNotReadyException("Not in a state to handle queries")
+        # Begin running query.
         self.ask = ask
         if self.currentQuery is None:
-            self.currentQuery = query
+            self.currentQuery = Query(pengine, query, True)
         else:
             raise PengineNotReadyException("Query already in place.")
-        state.run()
+
+        # Set pengine state to "ask", process response.
+        self.state.current_state = "ask"
+        answer = self.penginePost(
+        self.po.getActualURL("send", self.po.getID()),
+        "application/x-prolog; charset=UTF-8",
+        po.getRequestBodyAsk(ask, self.getID()))
+        self.handleAnswer(answer)
 
     def create(self):
         pass
 
     def destroy(self):
         pass
-
 
     def doNext(self, query):
         pass
@@ -82,6 +83,8 @@ class Pengine(object):
         '''
         try:
             respObject = penginePost(po.getActualUrl())
+        except:
+            pass
 
     def dumpStateDebug(self):
         pass
@@ -90,10 +93,18 @@ class Pengine(object):
         if self.currentQuery == query:
             this.currentQuery = None
 
-        if self.state == "ask":
-            self.state = "idle"
+        if self.state.current_state == "ask":
+            self.state.current_state = "idle"
 
     def penginePost(self, url, contentType, body):
+        '''
+        Posts body to the Pengine.
+        url:: String of url
+        contentType :: String -> Value of Content-Type header
+        body :: String -> Body of POST request
+
+        Errors: IOError
+        '''
         try:
             # Set up request header
             header = dict()
@@ -175,3 +186,8 @@ class Pengine(object):
 
         except json.JSONDecodeError:
             raise
+
+    def getID(self):
+        current_state = self.state.current_state
+        assert current_state = "ask" or current_state = "idle"
+        return self.pengineID
