@@ -1,6 +1,7 @@
 import json
-import urllib.urlparse as urlparse
+from urllib.parse import urlparse
 import sys
+from Exceptions import PengineNotReadyException
 
 
 class PengineBuilder(object):
@@ -51,7 +52,7 @@ class PengineBuilder(object):
         ask::String The prolog query.
         id::String The id of the pengine id that is transmitting.
             Currently not used.
-        ''''
+        '''
         return "ask({},[]).".format(ask)
 
     def dumpDebugState(self):
@@ -63,15 +64,15 @@ class PengineBuilder(object):
             destroy_string = "retain at end of query"
 
         serialized = ["--- PengineBuilder ----",
-         "alias {}".format(self.alias),
-         "application {}".format(self.application),
-         "ask {}".format(self.ask),
-         "chunk size {}".format(self.chunk),
-         destroy_string,
-         "server {}".format(self.urlserver),
-         "srctext {}".format(self.srctext),
-         "srcurl {}".format(self.srcurl),
-         "--- end PengineBuilder ---"]
+                      "alias {}".format(self.alias),
+                      "application {}".format(self.application),
+                      "ask {}".format(self.ask),
+                      "chunk size {}".format(self.chunk),
+                      destroy_string,
+                      "server {}".format(self.urlserver),
+                      "srctext {}".format(self.srctext),
+                      "srcurl {}".format(self.srcurl),
+                      "--- end PengineBuilder ---"]
         for line in serialized:
             sys.stderr.write(line)
 
@@ -91,3 +92,9 @@ class PengineBuilder(object):
         uribase = urlparse(self.urlserver)
         uribase.path = relative
         return uribase.geturl()
+
+    def getRequestBodyNext(self):
+        '''
+        Returns the POST body to get the next result.
+        '''
+        return "next."

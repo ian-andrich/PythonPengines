@@ -1,6 +1,3 @@
-import Collections
-
-
 class State(object):
     ''' State Machine Class.
         Initializes to start_state, and optionally an iterator of states, or
