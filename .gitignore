@@ -1,4 +1,6 @@
+/__pycache__
+
 .ropeproject*
 *.swp
 todo
-todo.swp
+.todo.swp
