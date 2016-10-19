@@ -1,3 +1,5 @@
+import collections
+
 class State(object):
     ''' State Machine Class.
         Initializes to start_state, and optionally an iterator of states, or
@@ -7,7 +9,7 @@ class State(object):
     '''
     def __init__(self, start_state, transitions=None):
         self.current_state = start_state  # Initialize a starting state.
-        self.transitions = Collections.defaultdict(list)
+        self.transitions = collections.defaultdict(list)
 
         # Initialize transitions if passed.
         if transitions is not None:

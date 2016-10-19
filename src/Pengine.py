@@ -1,8 +1,8 @@
-from Exceptions import CouldNotCreateException, PengineNotReadyException, \
+from src.Exceptions import CouldNotCreateException, PengineNotReadyException, \
     PengineNotAvailableException
-from State import State
+from src.State import State
 from Builder import PengineBuilder
-from Query import Query
+from src.Query import Query
 import copy
 import requests
 import json
@@ -21,6 +21,7 @@ class Pengine(object):
         '''
         self.availOutput = None
         self.currentQuery = None
+        self.state = State("not_created")
         if builder is None:
             self.po = PengineBuilder()
         else:
@@ -28,13 +29,12 @@ class Pengine(object):
         self.slave_limit = slave_limit
         self.ask = None
         try:
-            self.pengineID = self.create(self.po)
+            self.pengineID = self.create()
         except PengineNotReadyException:
             self.state.current_state = "destroy"
             raise PengineNotReadyException
 
         # Initialize state transitions
-        self.state = State()
         # transitions = [("not_created", True, self.create, "idle"),
         #                ("idle", self.hasCurrentQuery, self.ask, "ask"),
         #                ("ask", self.queryHasNext, self.__next__, "ask")]
@@ -71,13 +71,14 @@ class Pengine(object):
     def create(self):
         '''
         Configures the Pengine object.  Returns a pengine id string.'''
-        assert self.state.current_stae == "not_created"
+        assert self.state.current_state == "not_created"
         # Post the create request.
+        print(self.po.getActualURL("create"))  # Delete
         response = self.penginePost(self.po.getActualURL("create"),
                                     "application/json",
                                     self.po.getRequestBodyCreate())
         # Parse request into JSON
-        json_response = json.JSONDecoder().decode(response)
+        json_response = json.JSONDecoder().decode(response.body)
         # Begin setting various attributes.
         # Handle "event" key in JSON response.
         event_string = json_response["event"]
@@ -184,23 +185,22 @@ class Pengine(object):
         try:
             # Set up request header
             header = dict()
-            header["User-Agent"] = "JavaPengine"
+            header["User-Agent"] = "PythonPengine"
             header["Accept"] = "application/json"
             header["Accept-Language"] = "en-us,en;q=0.5"
-            header["Content-type", contentType]
+            header["Content-type"] = contentType
 
-            # Send Post Request
-            session = requests.session()
-            req = requests.Request('POST', url=self.po.urlserver,
-                                   headers=header)
-            prepped = req.prepare()
-            prepped.body(body)
-            response = session.send(prepped)
+            # Send Post Request -- catch errors and close
+            with requests.session() as s:
+                req = requests.Request(url=url, headers=header)
+                prepped = req.prepare()
+                prepped.body = body
+                response = s.send(prepped)
             # Catch bad status codes
             if response.status_code < 200 or response.status_code > 299:
-                raise IOError("Bad response code.  If 500 query was invalid?\
-                            query threw Prolog exception?")
-
+                raise IOError("Bad response code: {}.  ".format(response.status_code)\
+                              +  "If 500 query was invalid? " \
+                              + "query threw Prolog exception?")
             # Read in response.
             return response.json()
         except IOError as e:

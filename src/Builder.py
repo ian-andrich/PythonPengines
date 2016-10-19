@@ -1,7 +1,7 @@
 import json
 from urllib.parse import urlparse
 import sys
-from Exceptions import PengineNotReadyException
+from src.Exceptions import PengineNotReadyException
 
 
 class PengineBuilder(object):
@@ -45,7 +45,7 @@ class PengineBuilder(object):
         if self.ask is not None:
             data["ask"] = self.ask
 
-        return json.dumps(data)
+        return json.JSONEncoder().encode(data)
 
     def getRequestBodyAsk(self, ask, id=None):
         '''
@@ -76,7 +76,29 @@ class PengineBuilder(object):
         for line in serialized:
             sys.stderr.write(line)
 
-    def getActualURL(self, action, id):
+    def getActualURL(self, action, id_=None):
+        '''
+        This class dispatches to self._getActualURL(action, id_) or
+            self._getActualURL_(action) depending on the presence of id.
+        returns the full url needed to accomplish the task.
+        '''
+        if id is not None:
+            return self._getActualURL(action, id_)
+        else:
+            return self._getActualURL_(action)
+
+    def _getActualURL_(self, action):
+        '''
+        action :: String -> an action like "create", "destroy", etc.
+        return :: String -> The full URL needed to perform the action.
+        '''
+        if self.urlserver is None:
+            raise PengineNotReadyException("Need to set server to get URL")
+        relative = "/pengine/{}".format(action)
+        new = self.urlserver + relative
+        return new
+
+    def _getActualURL(self, action, id_):
         '''
         Parses in the relative information necessary to perform a query on
         Pengines into a full URL form.
@@ -88,11 +110,10 @@ class PengineBuilder(object):
         if self.urlserver is None:
             raise PengineNotReadyException("Cannot get actual URL without \
                                            setting the server")
-        relative = "/pengine/{1}?format=json&id={2}".format(action, self.id)
-        uribase = urlparse(self.urlserver)
-        uribase.path = relative
-        return uribase.geturl()
-
+        relative = "/pengine/{0}?format=json&id={1}".format(action, id_)
+        # ToDo uribase = urlparse(self.urlserver)
+        # ToDo uribase.path = relative
+        return self.urlserver + relative
     def getRequestBodyNext(self):
         '''
         Returns the POST body to get the next result.
