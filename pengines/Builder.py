@@ -1,7 +1,7 @@
 import json
 from urllib.parse import urlparse
 import sys
-from src.Exceptions import PengineNotReadyException
+from pengines.Exceptions import PengineNotReadyException
 
 
 class PengineBuilder(object):
@@ -82,7 +82,8 @@ class PengineBuilder(object):
             self._getActualURL_(action) depending on the presence of id.
         returns the full url needed to accomplish the task.
         '''
-        if id is not None:
+        if id_ is not None:
+            print("id_ not null is firing!!!!")  # Delete
             return self._getActualURL(action, id_)
         else:
             return self._getActualURL_(action)
@@ -94,8 +95,15 @@ class PengineBuilder(object):
         '''
         if self.urlserver is None:
             raise PengineNotReadyException("Need to set server to get URL")
-        relative = "/pengine/{}".format(action)
-        new = self.urlserver + relative
+        # Verify the server url ends in a '/'
+        if self.urlserver[-1] != "/":
+            urlserver = self.urlserver + "/"
+        else:
+            urlserver = self.urlserver
+        relative = "pengine/{}".format(action)
+        new = urlserver + relative
+        print("Builder._getActualURL log.")
+        print("New value is :", new)
         return new
 
     def _getActualURL(self, action, id_):
@@ -110,10 +118,13 @@ class PengineBuilder(object):
         if self.urlserver is None:
             raise PengineNotReadyException("Cannot get actual URL without \
                                            setting the server")
-        relative = "/pengine/{0}?format=json&id={1}".format(action, id_)
-        # ToDo uribase = urlparse(self.urlserver)
-        # ToDo uribase.path = relative
-        return self.urlserver + relative
+        # Encoding seems ambiguous.
+        if self.urlserver[-1] != "/":
+            urlserver = self.urlserver + "/"
+        else:
+            urlserver = self.urlserver
+        relative = "pengine/{0}?format=json&id={1}".format(action, id_)
+        return urlserver + relative
     def getRequestBodyNext(self):
         '''
         Returns the POST body to get the next result.

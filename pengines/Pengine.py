@@ -1,8 +1,8 @@
-from src.Exceptions import CouldNotCreateException, PengineNotReadyException, \
+from pengines.Exceptions import CouldNotCreateException, PengineNotReadyException, \
     PengineNotAvailableException
-from src.State import State
-from Builder import PengineBuilder
-from src.Query import Query
+from pengines.State import State
+from pengines.Builder import PengineBuilder
+from pengines.Query import Query
 import copy
 import requests
 import json
@@ -74,6 +74,7 @@ class Pengine(object):
         assert self.state.current_state == "not_created"
         # Post the create request.
         print(self.po.getActualURL("create"))  # Delete
+        print(self.po.getRequestBodyCreate())
         response = self.penginePost(self.po.getActualURL("create"),
                                     "application/json",
                                     self.po.getRequestBodyCreate())
@@ -192,6 +193,8 @@ class Pengine(object):
 
             # Send Post Request -- catch errors and close
             with requests.session() as s:
+                print(url, header)  # Delete
+                print(body)  # Delete
                 req = requests.Request(url=url, headers=header)
                 prepped = req.prepare()
                 prepped.body = body
