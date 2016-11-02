@@ -1,0 +1,159 @@
+			/* {  "answer": {    
+			             "data": ["a" ],    
+			             "event":"success",    
+			             "id":"2204d4b2-de94-4946-965c-e7aaf12a1a8b",    
+			             "more":true,    
+			             "projection": ["X" ],    
+			             "time":2.2752000000000015e-5  
+			      },  
+		        "event":"create",  
+		        "id":"2204d4b2-de94-4946-965c-e7aaf12a1a8b",  
+		        "slave_limit":3
+		        }
+		        
+		        if no first solution job.add("ask", "member(X, [])");
+		        {
+		          "answer":{
+			             "data":{
+			                   "event":"failure",
+			                   "id":"c7e9e0c5-84b6-4faa-bbcb-1e1139df1206",
+			                   "time":0.000019857999999999985
+			                   },
+			             "event":"destro.
+			             y",
+			             "id":"c7e9e0c5-84b6-4faa-bbcb-1e1139df1206"
+			         },
+		         "event":"create",
+		         "id":"c7e9e0c5-84b6-4faa-bbcb-1e1139df1206",
+		         "slave_limit":3
+		         }
+		         
+		         What happens if job.add("ask", "member(X, ][])");  (syntax invalid)?
+		         it returns 500
+		         (document that it also 500's if it throws an uncaught exception)
+		         
+		         what if we don't use template?
+		         {  
+		             "answer": {    
+		                  "data": [ {"X":"a"} ],    
+		                  "event":"success",    
+		                  "id":"4f856b3a-a2a5-493c-8241-baf1a5a5ed28",    
+		                  "more":true,    
+		                  "projection": ["X" ],    
+		                  "time":1.5222999999999973e-5  
+		             },  
+		             "event":"create",  
+		             "id":"4f856b3a-a2a5-493c-8241-baf1a5a5ed28",  
+		             "slave_limit":3}
+		             
+		             with more than one variable a couple fields change
+		             	job.add("ask", "member((X,Y), [(a,3),(b,4),(c,5)])");
+		              // job.add("template", "X");
+		              "data": [ {"X":"a", "Y":3} ],    
+                     "projection": ["X", "Y" ],  
+
+
+		             non atom response
+		             job.add("ask", "member(X, [(a,3),(b,4),(c,5)])");
+		             job.add("template", "X");
+		             {  "answer": {    
+		                    "data": [ {"args": ["a", 3 ], "functor":","} ],   
+		                     "event":"success",   
+		                      "id":"514e0608-5925-4774-a408-4d5d03344c5f",    
+		                      "more":true,    
+		                      "projection": ["X" ],   
+		                       "time":1.6837000000000015e-5  },  
+		                       "event":"create",  
+		                       "id":"514e0608-5925-4774-a408-4d5d03344c5f", 
+					"slave_limit":3}
+					
+					now I'll set the type to json-s in the create
+					and it just 500's
+					
+					Try it with chunking set to 2
+					   job.add("ask", "member((X,Y), [(a,3),(b,4),(c,5)])");
+		            
+		            {  
+		                 "answer": {    
+			                 "data": [ {"X":"a", "Y":3},  {"X":"b", "Y":4} ],    
+			                 "event":"success",    
+			                 "id":"b648885b-cf65-49f4-a028-756bb2579d2b",    
+			                 "more":true,    
+			                 "projection": ["X", "Y" ],    
+			                 "time":1.6732999999999896e-5  
+			            },  
+			            "event":"create",  
+			            "id":"b648885b-cf65-49f4-a028-756bb2579d2b",  
+			            "slave_limit":3
+		            }
+		            
+		            what if the value bound is compound? I changed a in the example to a(taco)
+		            "data": [      {"X": {"args": ["taco" ], "functor":"a"}, "Y":3},      {"X":"b", "Y":4}    ],  
+		        */
+			
+/*
+ * This project has involved a lot of experimenting, as hte protocol is poorly documented. As such,
+ * I'm retaining my notes here
+ */
+// <domain>/<path>/pengine/create
+// application/json
+// see server_url/4, line 1529 of pengines.pl
+/*
+* HTTP/1.1 200 OK
+Server: nginx/1.4.6 (Ubuntu)
+Date: Wed, 20 Apr 2016 20:53:39 GMT
+Content-Type: text/x-prolog; charset=UTF-8
+Content-Length: 65
+Connection: close
+
+http://www.oracle.com/technetwork/articles/java/json-1973242.html
+
+Asks response looks like
+success('8eb2ec31-fd63-43a2-a80b-4552b6d505d7',
+	[q(b)],
+	1.1307000000002065e-5,
+	true)
+	
+	the last item is whether there are more
+	
+then when you get the last one, and it does a destroy (I guess?)
+
+destroy('8eb2ec31-fd63-43a2-a80b-4552b6d505d7',
+	success('8eb2ec31-fd63-43a2-a80b-4552b6d505d7',
+		[q(c)],
+		2.1917999999999244e-5,
+		false))
+		
+		
+	from pengines.pl http_pengine_create/1
+	
+	%   HTTP POST handler  for  =/pengine/create=.   This  API  accepts  the
+%   pengine  creation  parameters  both  as  =application/json=  and  as
+%   =www-form-encoded=.
+
+Looks like event_to_json we want the lang to be json-s maybe? certainly need to look into it.
+For the moment, just json
+
+Next uri looks like
+
+'/pengine/send?id=421ec554-f15c-4798-b10d-897831727bef
+(it's the same id,event,format handler in http_pengine_send, so same possible args)
+
+and returns this strange critter
+
+    
+{"data":
+         {"data":[{"X":"c"}],
+         "event":"success",
+         "id":"4c53430f-9570-4e05-9036f6b5fc63dd8c",
+         "more":false,
+         "time":0.00003951999999999992
+     },
+     "event":"destroy",
+     "id":"4c53430f-9570-4e05-9036-f6b5fc63dd8c"
+}
+
+
+
+
+*/
