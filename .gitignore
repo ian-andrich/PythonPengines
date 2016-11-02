@@ -4,5 +4,5 @@
 *.swp
 todo
 .todo.swp
-__pycache__*
+*__pycache__*
 *.pyc
