@@ -1,5 +1,4 @@
 import json
-from urllib.parse import urlparse
 import sys
 from pengines.Exceptions import PengineNotReadyException
 
@@ -125,8 +124,16 @@ class PengineBuilder(object):
             urlserver = self.urlserver
         relative = "pengine/{0}?format=json&id={1}".format(action, id_)
         return urlserver + relative
+
     def getRequestBodyNext(self):
         '''
         Returns the POST body to get the next result.
         '''
         return "next."
+
+    def getReqestBodyStop(self):
+        '''
+        Returns 'stop
+        Todo: Remove this Javaism.
+        '''
+        return "stop."
