@@ -25,15 +25,42 @@ print(data, type(data))
 # Request using urllib due to request libs broken implementation.
 request_object = Request(url, data=data_utf8, headers=header)
 response = urlopen(request_object)
-response_string_utf8 = response.read()
+response_string_utf8 = response.readall()
 response_string = response_string_utf8.decode("utf-8")
 
-# Super fragile parsing!! Only handles one digit pengine slave counts.
-print(len(response_string))
-assert len(response_string) == 68
-print(response_string[8:47], response_string[62])
-pengine_id = response_string[8:47]
-pengine_slave_count = response_string[62]
+
+def parse_create(response_string):
+    pengine_id_char_list = []
+    pengine_slave_limit_char_list = []
+    state = 0
+    print(response_string)
+    for char in response_string:
+        if state == 0 and char.isnumeric():
+            print("Found first number")
+            state = 1
+
+        if state == 1 and char.isnumeric():
+            pengine_id_char_list.append(char)
+        elif state == 1:
+            state = 2
+
+        if state == 2 and char.isnumeric():
+            pengine_slave_limit_char_list.append(char)
+
+    pengine_id = "".join(pengine_id_char_list)
+    pengine_slave_limit = "".join(pengine_slave_limit_char_list)
+    print("Parse Results: Id: {}, Limit: {}".format(pengine_id, pengine_slave_limit))
+    return pengine_id, pengine_slave_limit
+
+
+# ToDo: Super fragile parsing!! Only handles one digit pengine slave counts.
+# print(len(response_string))
+# assert len(response_string) == 68
+# print(response_string[8:47], response_string[62])
+# pengine_id = response_string[8:47]
+# pengine_slave_count = response_string[62]
+pengine_id, pengine_slave_count = parse_create(response_string)
+
 
 # Start the query cycle.
 print("Starting query")
