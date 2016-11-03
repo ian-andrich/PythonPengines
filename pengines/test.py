@@ -48,10 +48,30 @@ print("Header: ", header)
 body_ask = "ask({}, []).".format("member(X, [1,2,3])") # po.getrequestbodyask
 print("Body: ", body_ask)
 body_utf8 = body_ask.encode("utf-8")
-query_request = Request(url_ask, data=body_utf8, headers = header)
+query_request = Request(url_ask, data=body_utf8, headers=header)
 query_response = urlopen(query_request)
 query_response_utf8 = query_response.readall()
 query_response_string = query_response_utf8.decode("utf-8")
 print("Response received: ", query_response_string)
 query_response_dict = json.JSONDecoder().decode(query_response_string)
 print("Decoded JSON: ", query_response_dict)
+print("Data from JSON: ", query_response_dict['data'])
+
+# More calls.
+def get_more(urlbase, pengine_id, header):
+    ''' This function gets more responses, if they exist.'''
+    # Make URL
+    url_next = urlbase + "/pengine/send?format=json&id={}".format(pengine_id)
+    # Pass headers as normal.
+    # Make body.
+    body = "next."
+    body_utf8 = body.encode("utf-8")
+    next_request = Request(url_next, data=body_utf8, headers=header)
+    next_response = urlopen(next_request)
+    next_response_utf8 = next_response.readall()
+    next_response_string = next_response_utf8.decode("utf-8")
+    next_response_dict = json.JSONDecoder().decode(next_response_string)
+    return next_response_dict
+
+print(get_more(urlbase, pengine_id, header))
+print(get_more(urlbase, pengine_id, header))
