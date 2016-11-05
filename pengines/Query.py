@@ -19,11 +19,15 @@ class Query(object):
     '''
     def __init__(self, pengine, ask, queryMaster=True):
         '''pengine :: Pengine, ask :: String, queryMaster :: Boolean'''
+        if pengine.debug:
+            print("Initializing query with query: {}".format(ask))
         self.availProofs = []
         self.hasMore = True
         self.pengine = pengine
+        self.ask = ask
         if queryMaster:
             pengine.doAsk(self, ask)
+        return None
 
     def dumpDebugState(self):
         pass
@@ -64,7 +68,6 @@ class Query(object):
         Returns True if we __think__ we have more data.
         data::String
         '''
-        data = json.JSONDecoder().decode(data)
         for item in data:
             self.availProofs.append(item)
         return self.hasMore or not self.availProofs == []

@@ -90,7 +90,6 @@ class PengineBuilder(object):
         returns the full url needed to accomplish the task.
         '''
         if id_ is not None:
-            print("id_ not null is firing!!!!")  # Delete
             return self._getActualURL(action, id_)
         else:
             return self._getActualURL_(action)
@@ -122,16 +121,20 @@ class PengineBuilder(object):
         id::String -> The id of the pengine in question.
         '''
         # Verify server url is set, otherwise raise PengineNotReadyException
+        print("_getActualURL is firing.")
         if self.urlserver is None:
             raise PengineNotReadyException("Cannot get actual URL without \
                                            setting the server")
-        # Encoding seems ambiguous.
+        # Catch missing ending '/' if applicable.
         if self.urlserver[-1] != "/":
             urlserver = self.urlserver + "/"
         else:
             urlserver = self.urlserver
+
         relative = "pengine/{0}?format=json&id={1}".format(action, id_)
-        return urlserver + relative
+        url = urlserver + relative
+        print("_getActualURL is returning {}".format(url))
+        return url
 
     def getRequestBodyNext(self):
         '''

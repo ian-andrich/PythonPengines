@@ -7,6 +7,7 @@ from pengines.Query import Query
 import copy
 from urllib.request import Request, urlopen
 import json
+import urllib
 
 
 class Pengine(object):
@@ -33,8 +34,10 @@ class Pengine(object):
         else:
             self.po = copy.deepcopy(builder)
 
+        # self.create() gets pengineID
         self.slave_limit = slave_limit
-        self.ask = None
+        # ToDo : Figure out what this ask flag does.
+        # self.ask = None
         try:
             self.pengineID = self.create()
         except PengineNotReadyException:
@@ -43,14 +46,14 @@ class Pengine(object):
 
         # ToDo
         # Initialize state transitions
-        # transitions = [("not_created", True, self.create, "idle"),
-        #                ("idle", self.hasCurrentQuery, self.ask, "ask"),
-        #                ("ask", self.queryHasNext, self.__next__, "ask")]
+        if self.debug:
+            print("Initialization complete.")
+        return None
 
     def ask(self, query):
         '''
         Parameters:
-            query :: str -> The prolog query as a string.
+            query::str -> The prolog query as a string.
 
         Return:
             query::pengine.Query.Query() object.
@@ -59,22 +62,16 @@ class Pengine(object):
             IOError raised if query cannot be created, or server cannot be
             contacted
         '''
-        self.currentQuery = Query(self, query, True)
-        try:
-            answer = self.penginePost(self.po.urlserver,
-                                      "application/x-prolog; charset=UTF-8",
-                                      self.po.getRequestBodyAsk(self.ask))
-            self.handleAnswer(answer)
-        except IOError:
-            self.destroy()
-            raise PengineNotAvailableException()
+        if self.debug:
+            print("Starting the call to ask.")
+            print("Current state is {}".format(self.state.current_state))
+        self.currentQuery = Query(self, query, False)
 
     def doAsk(self, query, ask):
         # Check to make sure state is idle and can handle queries.
         if self.state.current_state != "idle":
             raise PengineNotReadyException("Not in a state to handle queries")
         # Begin running query.
-        self.ask = ask
         if self.currentQuery is None:
             self.currentQuery = Query(self, query, True)
         else:
@@ -89,7 +86,10 @@ class Pengine(object):
 
     def create(self):
         '''
-        Configures the Pengine object.  Returns a pengine id string.'''
+        Configures the Pengine object.  Returns a pengine id string.
+
+        Modifies state -- to "idle" if created successfully.  Else "destroy"
+        '''
         assert self.state.current_state == "not_created"
         if self.debug:
             print("Starting call.")
@@ -103,19 +103,20 @@ class Pengine(object):
         response = self.penginePost(url, contentType, body)
         if self.debug:
             print(response)
-        # Parse request into JSON
-        json_response = json.JSONDecoder().decode(response.body)
+
         # Begin setting various attributes.
-        # Handle "event" key in JSON response.
-        event_string = json_response["event"]
+
+        # Set the event state to destroy if request failed, or idle and waiting
+        # for a query.
+        event_string = response["event"]
         if event_string == "destroy":
             self.state.current_state = "destroy"
         elif event_string == "create":
             self.state.current_state = "idle"
         else:
-            raise CouldNotCreateException("Create request event was {} must be\
-                                          create or \
-                                          destroy".format(event_string))
+            err_msg = "Create request event was {}, but must be create or"\
+                "destroy".format(event_string)
+            raise CouldNotCreateException(err_msg)
 
         # Handle setting ask.
         if self.po.ask is not None:
@@ -124,11 +125,11 @@ class Pengine(object):
             self.state.current_state = "ask"
 
         # Handle "answer" key
-        if "answer" in json_response:
-            self.handleAnswer(json_response["answer"])
+        if "answer" in response:
+            self.handleAnswer(response["answer"])
 
         # Handle "id" key
-        id_ = json_response["id"]
+        id_ = response["id"]
         if id_ is None:
             raise CouldNotCreateException("No pengine id in create message")
         return id_
@@ -144,15 +145,19 @@ class Pengine(object):
         Parameters:
             query :: Query the query object to continue providing data to.
         '''
-        assert self.state.current_state == "ask"
-        if self.query != self.currentQuery:
+        # ToDo assert self.state.current_state == "ask"
+        if query != self.currentQuery:
             raise PengineNotReadyException("Cannot advance more than one query -\
                                            finish one before starting next.")
 
         url = self.po.getActualURL("send", self.getID())
-        header = "application/x-prolog; charset=UTF-8",
-        body = self.po.getRequestBodyNext()
-        string_response_object = self.penginePost(url, header, body)
+        contentType = "application/json; charset=UTF-8",
+        body = self.po.getRequestBodyNext().encode("utf-8")
+        if self.debug:
+            print("url: {0}; body: {1}; contentType{2}".format(url,
+                                                            contentType,
+                                                            body))
+        string_response_object = self.penginePost(url, contentType, body)
         self.handleAnswer(string_response_object)
 
     def doPullResponse(self):
@@ -174,6 +179,7 @@ class Pengine(object):
         response = self.penginePost(url, content_type, body_response)
         # Pass the response the handler
         self.handleAnswer(response)
+        raise TypeError("doPullNot implemented exception")
 
     def doStop(self):
         '''Raises PengineNotReadyException'''
@@ -183,6 +189,7 @@ class Pengine(object):
                                       "application/x-prolog; charset=UTF-8",
                                       self.po.getRequestBodyStop())
         self.handleAnswer(respObject)
+        pass
 
     def dumpStateDebug(self):
         pass
@@ -206,12 +213,8 @@ class Pengine(object):
         contentType :: String -> Value of Content-Type header
         body :: String -> Body of POST request
 
-        Return: python encoded string representing the body of the response.
-                Parsing is the responsibility of the caller.
-                    -- Note the format of a "create" request is Prolog encoded
-                       But the format of an ask is "JSON encoded"
-
-        Errors: IOError
+        Return: response_dict::dict -> A dict representing the JSON encoded response.
+        Errors: IOError -> If there is a problem posting, an IOError is raised.
         '''
         # Set up request header
         header = dict()
@@ -235,13 +238,16 @@ class Pengine(object):
             response = urlopen(request_object)
             response_string_utf8 = response.readall()
             response_string = response_string_utf8.decode("utf-8")
+            if self.debug:
+                print("response_string is ", response_string)
+            response_dict = json.JSONDecoder().decode(response_string)
             # Catch bad status codes
             status = response.status
             if status < 200 or status > 299:
                 err_msg = "Bad response code: {}  If query 500 was invalid?\
                     query threw Prolog exception".format(status)
                 raise IOError(err_msg)
-            return response_string
+            return response_dict
         except IOError as e:
             self.destroy()
             raise e
@@ -255,51 +261,48 @@ class Pengine(object):
             SyntaxError
         '''
         try:
-            # Turn the answer into the python equivalent of the JSON input
-            json_answer = json.JSONDecoder.decode(answer)
             if "event" in answer:
-                event_val = json_answer["event"]
+                event_val = answer["event"]
+                if self.debug:
+                    print("pengine.Pengine().handleAnswer reports {}".format(event_val))
                 # Handle "success" switch
-                if json_answer[event_val] == "success":
-                    if "data" in json_answer:
-                        # json_answer["data"] should be a list
-                        self.currentQuery.addNewData(json_answer["data"])
-                    if "more" in json_answer:
-                        if not isinstance(json_answer("more", bool)):
+                if event_val == "success":
+                    if "data" in answer:
+                        # answer["data"] should be a list
+                        self.currentQuery.addNewData(answer["data"])
+                    if "more" in answer:
+                        if not isinstance(answer["more"], bool):
                             self.currentQuery.noMore()
 
                 # Handle "destroy" switch
-                elif json_answer[event_val] == "destroy":
-                    if "data" in json_answer:
-                        self.handleAnswer(json_answer["data"])
+                elif event_val == "destroy":
+                    if "data" in answer:
+                        self.handleAnswer(answer["data"])
                     if self.currentQuery is not None:
                         self.currentQuery.noMore()
-                        self.state = "destroyed"
+                        self.state.current_state = "destroyed"
 
                 # Handle "failure" switch
-                elif json_answer[event_val] == "failure":
+                elif event_val == "failure":
                     self.currentQuery.noMore()
 
                 # Handle "stop" switch
-                elif json_answer[event_val] == "stop":
+                elif event_val == "stop":
                     self.currentQuery.noMore()
 
                 # Handle "error" switch
-                elif json_answer[event_val] == "error":
+                elif event_val == "error":
                     raise SyntaxError("Error - probably invalid Prolog query?")
 
                 # Handle "died" switch
-                elif json_answer[event_val] == "died":
-                    self.state = "destroyed"
+                elif event_val == "died":
+                    self.state.current_state = "destroyed"
 
                 # Default to raising a syntax error.
                 else:
                     raise SyntaxError("Bad event in answer")
         except PengineNotReadyException:
             raise SyntaxError
-
-        except json.JSONDecodeError:
-            raise json.JSONDecodeError
 
     def getID(self):
         '''
