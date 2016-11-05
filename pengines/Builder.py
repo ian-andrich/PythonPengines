@@ -13,7 +13,8 @@ class PengineBuilder(object):
                  srctext=None,
                  srcurl=None,
                  format_type="json",
-                 alias=None):
+                 alias=None,
+                 debug=False):
         self.alias = alias
         self.application = application
         self.ask = ask
@@ -24,16 +25,23 @@ class PengineBuilder(object):
         self.srctext = srctext
         self.srcurl = srcurl
         self.request_body = self.getRequestBodyCreate()
+        self.debug = False
 
     def getRequestBodyCreate(self):
-        '''Returns the string to be passed to the Pengine, according to the
-        values passed to the builder '''
+        '''
+        String a representation of the request body for the create action.
+        Return:
+            json encoding of self.destroy, self.chunk, self.format_type,
+            self.srctext, self.srcurl
+        '''
         data = dict()
         if not self.destroy:
             data["destroy"] = False
 
         if self.chunk > 1:
             data["chunk"] = self.chunk
+
+        data["format"] = self.format_type
 
         if self.srctext is not None:
             data["srctext"] = self.srctext
@@ -128,6 +136,7 @@ class PengineBuilder(object):
     def getRequestBodyNext(self):
         '''
         Returns the POST body to get the next result.
+        Todo: Remove this Javaism.
         '''
         return "next."
 

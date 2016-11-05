@@ -1,15 +1,16 @@
-from pengines.Exceptions import CouldNotCreateException, PengineNotReadyException, \
+from pengines.Exceptions import CouldNotCreateException, \
+    PengineNotReadyException, \
     PengineNotAvailableException
 from pengines.State import State
 from pengines.Builder import PengineBuilder
 from pengines.Query import Query
 import copy
-import requests
+from urllib.request import Request, urlopen
 import json
 
 
 class Pengine(object):
-    def __init__(self, builder=None, slave_limit=-1):
+    def __init__(self, builder=None, slave_limit=-1, debug=False):
         '''
         This Pengine object is used to run one or more queries of the
         Prolog Knowledge base set in the PengineBuilder.  builder::None ||
@@ -22,24 +23,42 @@ class Pengine(object):
         self.availOutput = None
         self.currentQuery = None
         self.state = State("not_created")
+
+        # Initialize debug value, defaulting to False.
+        self.debug = debug
+
+        # Handle the builder logic.
         if builder is None:
             self.po = PengineBuilder()
         else:
             self.po = copy.deepcopy(builder)
+
         self.slave_limit = slave_limit
         self.ask = None
         try:
             self.pengineID = self.create()
         except PengineNotReadyException:
             self.state.current_state = "destroy"
-            raise PengineNotReadyException
+            raise PengineNotReadyException("Pengine could not be created!!")
 
+        # ToDo
         # Initialize state transitions
         # transitions = [("not_created", True, self.create, "idle"),
         #                ("idle", self.hasCurrentQuery, self.ask, "ask"),
         #                ("ask", self.queryHasNext, self.__next__, "ask")]
 
     def ask(self, query):
+        '''
+        Parameters:
+            query :: str -> The prolog query as a string.
+
+        Return:
+            query::pengine.Query.Query() object.
+
+        Errors:
+            IOError raised if query cannot be created, or server cannot be
+            contacted
+        '''
         self.currentQuery = Query(self, query, True)
         try:
             answer = self.penginePost(self.po.urlserver,
@@ -72,12 +91,18 @@ class Pengine(object):
         '''
         Configures the Pengine object.  Returns a pengine id string.'''
         assert self.state.current_state == "not_created"
+        if self.debug:
+            print("Starting call.")
         # Post the create request.
-        print(self.po.getActualURL("create"))  # Delete
-        print(self.po.getRequestBodyCreate())
-        response = self.penginePost(self.po.getActualURL("create"),
-                                    "application/json",
-                                    self.po.getRequestBodyCreate())
+        url = self.po.getActualURL("create")
+        contentType = "application/json"
+        body = self.po.getRequestBodyCreate()
+        if self.debug:
+            print("Starting post request with URL {0}, content_type: {1}"\
+                  ", and body: {2}".format(url, contentType, body))
+        response = self.penginePost(url, contentType, body)
+        if self.debug:
+            print(response)
         # Parse request into JSON
         json_response = json.JSONDecoder().decode(response.body)
         # Begin setting various attributes.
@@ -181,31 +206,42 @@ class Pengine(object):
         contentType :: String -> Value of Content-Type header
         body :: String -> Body of POST request
 
+        Return: python encoded string representing the body of the response.
+                Parsing is the responsibility of the caller.
+                    -- Note the format of a "create" request is Prolog encoded
+                       But the format of an ask is "JSON encoded"
+
         Errors: IOError
         '''
-        try:
-            # Set up request header
-            header = dict()
-            header["User-Agent"] = "PythonPengine"
-            header["Accept"] = "application/json"
-            header["Accept-Language"] = "en-us,en;q=0.5"
-            header["Content-type"] = contentType
+        # Set up request header
+        header = dict()
+        header["User-Agent"] = "PythonPengine"
+        header["Accept"] = "application/json"
+        header["Accept-Language"] = "en-us,en;q=0.5"
+        header["Content-type"] = contentType
 
+        # Make sure body is utf-8
+        if isinstance(body, bytes):
+            body_utf8 = body
+        elif isinstance(body, str):
+            body_utf8 = body.encode("utf-8")
+        else:
+            raise TypeError("Don't know how to handle body parameter of type\
+                            {}").format(type(body))
+
+        try:
             # Send Post Request -- catch errors and close
-            with requests.session() as s:
-                print(url, header)  # Delete
-                print(body)  # Delete
-                req = requests.Request(url=url, headers=header)
-                prepped = req.prepare()
-                prepped.body = body
-                response = s.send(prepped)
+            request_object = Request(url, data=body_utf8, headers=header)
+            response = urlopen(request_object)
+            response_string_utf8 = response.readall()
+            response_string = response_string_utf8.decode("utf-8")
             # Catch bad status codes
-            if response.status_code < 200 or response.status_code > 299:
-                raise IOError("Bad response code: {}.  ".format(response.status_code)\
-                              +  "If 500 query was invalid? " \
-                              + "query threw Prolog exception?")
-            # Read in response.
-            return response.json()
+            status = response.status
+            if status < 200 or status > 299:
+                err_msg = "Bad response code: {}  If query 500 was invalid?\
+                    query threw Prolog exception".format(status)
+                raise IOError(err_msg)
+            return response_string
         except IOError as e:
             self.destroy()
             raise e
