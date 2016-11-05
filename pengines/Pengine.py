@@ -36,16 +36,12 @@ class Pengine(object):
 
         # self.create() gets pengineID
         self.slave_limit = slave_limit
-        # ToDo : Figure out what this ask flag does.
-        # self.ask = None
         try:
             self.pengineID = self.create()
         except PengineNotReadyException:
             self.state.current_state = "destroy"
             raise PengineNotReadyException("Pengine could not be created!!")
 
-        # ToDo
-        # Initialize state transitions
         if self.debug:
             print("Initialization complete.")
         return None
@@ -66,22 +62,23 @@ class Pengine(object):
             print("Starting the call to ask.")
             print("Current state is {}".format(self.state.current_state))
         self.currentQuery = Query(self, query, False)
+        print("Call to ask is complete")
+        return self.currentQuery
 
-    def doAsk(self, query, ask):
+    def doAsk(self, query):
         # Check to make sure state is idle and can handle queries.
         if self.state.current_state != "idle":
             raise PengineNotReadyException("Not in a state to handle queries")
         # Begin running query.
         if self.currentQuery is None:
-            self.currentQuery = Query(self, query, True)
-        else:
-            raise PengineNotReadyException("Query already in place.")
+            self.currentQuery = query
 
         # Set pengine state to "ask", process response.
         self.state.current_state = "ask"
-        answer = self.penginePost(self.po.getActualURL("send", self.po.getID()),
+        answer = self.penginePost(self.po.getActualURL("send", self.pengineID),
                                   "application/x-prolog; charset=UTF-8",
-                                  self.po.getRequestBodyAsk(ask, self.getID()))
+                                  self.po.getRequestBodyAsk(query.ask,
+                                                            self.getID()))
         self.handleAnswer(answer)
 
     def create(self):
@@ -145,16 +142,18 @@ class Pengine(object):
         Parameters:
             query :: Query the query object to continue providing data to.
         '''
+        if self.debug:
+            print("pengines.Pengine().doNext is firing with query ", query)
         # ToDo assert self.state.current_state == "ask"
         if query != self.currentQuery:
             raise PengineNotReadyException("Cannot advance more than one query -\
                                            finish one before starting next.")
 
         url = self.po.getActualURL("send", self.getID())
-        contentType = "application/json; charset=UTF-8",
-        body = self.po.getRequestBodyNext().encode("utf-8")
+        contentType = "application/x-prolog; charset=UTF-8"
+        body = self.po.getRequestBodyNext()
         if self.debug:
-            print("url: {0}; body: {1}; contentType{2}".format(url,
+            print("url: {0}; body: {2}; contentType: {1}".format(url,
                                                             contentType,
                                                             body))
         string_response_object = self.penginePost(url, contentType, body)
@@ -216,6 +215,8 @@ class Pengine(object):
         Return: response_dict::dict -> A dict representing the JSON encoded response.
         Errors: IOError -> If there is a problem posting, an IOError is raised.
         '''
+        if self.debug:
+            print("Starting Post request.")
         # Set up request header
         header = dict()
         header["User-Agent"] = "PythonPengine"
@@ -232,6 +233,10 @@ class Pengine(object):
             raise TypeError("Don't know how to handle body parameter of type\
                             {}").format(type(body))
 
+        if self.debug:
+            print("URL is: ", url)
+            print("Data (body) : ", body_utf8)
+            print("Headers: ", header)
         try:
             # Send Post Request -- catch errors and close
             request_object = Request(url, data=body_utf8, headers=header)
@@ -239,7 +244,7 @@ class Pengine(object):
             response_string_utf8 = response.readall()
             response_string = response_string_utf8.decode("utf-8")
             if self.debug:
-                print("response_string is ", response_string)
+                print("response_string is :", response_string)
             response_dict = json.JSONDecoder().decode(response_string)
             # Catch bad status codes
             status = response.status
@@ -260,6 +265,8 @@ class Pengine(object):
             json.JSONDecodeError
             SyntaxError
         '''
+        if self.debug:
+            print("pengines.Pengine().handleAnswer({})".format(answer))
         try:
             if "event" in answer:
                 event_val = answer["event"]
@@ -271,8 +278,7 @@ class Pengine(object):
                         # answer["data"] should be a list
                         self.currentQuery.addNewData(answer["data"])
                     if "more" in answer:
-                        if not isinstance(answer["more"], bool):
-                            self.currentQuery.noMore()
+                        self.currentQuery.hasMore = False
 
                 # Handle "destroy" switch
                 elif event_val == "destroy":

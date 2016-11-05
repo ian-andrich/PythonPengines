@@ -46,7 +46,7 @@ class Query(object):
 
     def noMore(self):
         if not self.hasMore:
-            return
+            return False
 
         self.hasMore = False
         if not self.availProofs:

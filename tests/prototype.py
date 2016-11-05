@@ -2,7 +2,7 @@ from urllib.request import Request, urlopen
 import json
 
 # Make the URL
-urlbase = "http://localhost:4243"
+urlbase = "http://localhost:4242"
 url_action = "/pengine/create"
 url = urlbase + url_action
 
@@ -88,11 +88,15 @@ print("Data from JSON: ", query_response_dict['data'])
 def get_more(urlbase, pengine_id, header):
     ''' This function gets more responses, if they exist.'''
     # Make URL
+    print("Getting more...")
     url_next = urlbase + "/pengine/send?format=json&id={}".format(pengine_id)
+    print("Next URL: ", url_next)
     # Pass headers as normal.
     # Make body.
     body = "next."
+    print("Next body: ", body)
     body_utf8 = body.encode("utf-8")
+    print("Headers: ", header)
     next_request = Request(url_next, data=body_utf8, headers=header)
     next_response = urlopen(next_request)
     next_response_utf8 = next_response.readall()
