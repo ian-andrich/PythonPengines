@@ -40,3 +40,5 @@ while pengine.currentQuery.hasMore:
 ~~~~
 
 Major API changes coming in 0.2.0
+
+Right now each pengine is only good for one query.
