@@ -1,4 +1,4 @@
-# Python Pengines 0.1.0
+# Python Pengines 0.1.1
 This is a module for interfacing python with the Prolog Pengines knowledge base.
 
 ## API
