@@ -13,3 +13,4 @@ print()
 print(pengine.state.current_state)
 while pengine.currentQuery.hasMore:
     pengine.doNext(pengine.currentQuery)
+    print(pengine.currentQuery.availProofs)

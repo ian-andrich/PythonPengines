@@ -278,7 +278,7 @@ class Pengine(object):
                         # answer["data"] should be a list
                         self.currentQuery.addNewData(answer["data"])
                     if "more" in answer:
-                        self.currentQuery.hasMore = False
+                        self.currentQuery.hasMore = answer["more"]
 
                 # Handle "destroy" switch
                 elif event_val == "destroy":
