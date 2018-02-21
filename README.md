@@ -1,4 +1,4 @@
-# Python Pengines 0.1.1
+# Python Pengines 0.1.2
 This is a module for interfacing python with the Prolog Pengines knowledge base.
 
 ## API
@@ -42,3 +42,5 @@ while pengine.currentQuery.hasMore:
 Major API changes coming in 0.2.0
 
 Right now each pengine is only good for one query.
+
+## V.0.1.2 : Added repo to pypi under the name PythonPengines
