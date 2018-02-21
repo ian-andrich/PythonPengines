@@ -43,5 +43,6 @@ Major API changes coming in 0.2.0
 
 Right now each pengine is only good for one query.
 
+## v.0.1.4 : More fat fingering.
 ## V.0.1.3 : Fat fingered some pypi code.
 ## V.0.1.2 : Added repo to pypi under the name PythonPengines
