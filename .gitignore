@@ -6,3 +6,5 @@ todo
 *__pycache__*
 *.pyc
 *.swo
+dist/*
+MANIFEST
