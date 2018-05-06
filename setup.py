@@ -1,7 +1,7 @@
 from distutils.core import setup
 setup(
-    name = "PythonPengines",
-    packages = ["PythonPengines"],
+    name = "pengines",
+    packages = ["pengines"],
     version = "0.1.4",
     description = "A simple python library for interacting with SWI-Prologs Pengines",
     author = "Ian Andrich",
