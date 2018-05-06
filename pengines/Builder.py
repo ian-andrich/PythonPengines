@@ -8,7 +8,7 @@ class PengineBuilder(object):
                  urlserver=None,
                  application="sandbox",
                  ask=None,
-                 chunk=1,
+                 chunk=100,
                  destroy=True,
                  srctext=None,
                  srcurl=None,
