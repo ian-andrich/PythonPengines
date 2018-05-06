@@ -44,7 +44,7 @@ class PengineBuilder(object):
         data["format"] = self.format_type
 
         if self.srctext is not None:
-            data["srctext"] = self.srctext
+            data["src_text"] = self.srctext
 
         if self.srcurl is not None:
             data["srcurl"] = self.srcurl
