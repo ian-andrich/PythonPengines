@@ -10,7 +10,7 @@ Create a basic run pengine server script, and run it with swipl.
 
 server(Port) :- http_server(http_dispatch, [port(Port)]).
 
-:- server(4242)
+:- server(4242).
 ~~~~
 
 Initialize a basic PengineBuilder

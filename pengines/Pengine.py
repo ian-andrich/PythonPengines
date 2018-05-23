@@ -118,7 +118,7 @@ class Pengine(object):
         # Handle setting ask.
         if self.po.ask is not None:
             # If a query is present, immediately handle it.
-            self.currentQuery = Query.Query(self, self.po.getAsk(), False)
+            self.currentQuery = Query(self, self.po.ask, False)
             self.state.current_state = "ask"
 
         # Handle "answer" key
@@ -241,7 +241,7 @@ class Pengine(object):
             # Send Post Request -- catch errors and close
             request_object = Request(url, data=body_utf8, headers=header)
             response = urlopen(request_object)
-            response_string_utf8 = response.readall()
+            response_string_utf8 = response.read()
             response_string = response_string_utf8.decode("utf-8")
             if self.debug:
                 print("response_string is :", response_string)
