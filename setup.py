@@ -1,9 +1,10 @@
-from distutils.core import setup
+from setuptools import setup
 setup(
     name = "pengines",
     packages = ["pengines"],
     version = "0.1.5",
     description = "A simple python library for interacting with SWI-Prologs Pengines",
+    long_description=open("README.rst").read(),
     author = "Ian Andrich",
     author_email = "iandrich87+github@gmail.com",
     url = "https://github.com/ian-andrich/PythonPengines",
