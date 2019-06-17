@@ -51,6 +51,9 @@ class PengineBuilder(object):
 
         if self.ask is not None:
             data["ask"] = self.ask
+            
+        if self.application is not None:
+            data["application"] = self.application
 
         return json.JSONEncoder().encode(data)
 
