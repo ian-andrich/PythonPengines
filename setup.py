@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
     name = "pengines",
     packages = ["pengines"],
-    version = "0.1.7",
+    version = "0.1.8",
     description = "A simple python library for interacting with SWI-Prologs Pengines",
     long_description=open("README.rst").read(),
     author = "Ian Andrich, Chris Mungall",
