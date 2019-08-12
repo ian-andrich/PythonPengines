@@ -1,5 +1,6 @@
 import json
 import sys
+import logging
 from pengines.Exceptions import PengineNotReadyException
 
 
@@ -111,8 +112,8 @@ class PengineBuilder(object):
             urlserver = self.urlserver
         relative = "pengine/{}".format(action)
         new = urlserver + relative
-        print("Builder._getActualURL log.")
-        print("New value is :", new)
+        logging.info("Builder._getActualURL log.")
+        logging.info("New value is :", new)
         return new
 
     def _getActualURL(self, action, id_):
