@@ -112,8 +112,7 @@ class PengineBuilder(object):
             urlserver = self.urlserver
         relative = "pengine/{}".format(action)
         new = urlserver + relative
-        logging.info("Builder._getActualURL log.")
-        logging.info("New value is :", new)
+        logging.debug("New value is : {}".format(new))
         return new
 
     def _getActualURL(self, action, id_):
