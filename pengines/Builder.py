@@ -6,7 +6,7 @@ from pengines.Exceptions import PengineNotReadyException
 class PengineBuilder(object):
     def __init__(self,
                  urlserver=None,
-                 application="sandbox",
+                 application=None,
                  ask=None,
                  chunk=100,
                  destroy=True,
