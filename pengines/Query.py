@@ -36,13 +36,23 @@ class Query(object):
         '''Return True if we __think__ we have more data, else False.'''
         return self.hasMore or not self.availProofs == []
 
+    def __iter__(self):
+        return self
+    
     def __next__(self):
+        p = self.pengine
         if self.availProofs != []:
             data = self.availProofs.pop(0)
             if not self.hasMore and self.availProofs == []:
-                self.p.iAmFinished(self)
+                p.iAmFinished(self)
 
             return data
+        else:
+            if self.hasMore:
+                p.doNext(p.currentQuery)
+                if self.availProofs != []:
+                    return self.availProofs.pop(0)
+            raise StopIteration
 
     def noMore(self):
         if not self.hasMore:
