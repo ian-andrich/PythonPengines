@@ -5,7 +5,7 @@ setup(
     version = "0.1.7",
     description = "A simple python library for interacting with SWI-Prologs Pengines",
     long_description=open("README.rst").read(),
-    author = "Ian Andrich",
+    author = "Ian Andrich, Chris Mungall",
     author_email = "iandrich87+github@gmail.com",
     url = "https://github.com/ian-andrich/PythonPengines",
     download_url = "https://github.com/ian-andrich/PythonPengines/0.1.4",
