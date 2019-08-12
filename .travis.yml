@@ -1,0 +1,14 @@
+# this gives us extra memory:
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker pull cmungall/sparqlprog
+
+before_script:
+  - docker run -p 4242:9083 -e PORT=9083 --name sparqlprog_pengines cmungall/sparqlprog
+
+script:
+  - make test

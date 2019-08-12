@@ -1,5 +1,5 @@
 test:
-	pytest tests/srctest_test.py
+	python -m unittest tests/*_test.py
 
 # TODO: manually increment version in setup.py, run . bump.sh, then this
 release: cleandist
