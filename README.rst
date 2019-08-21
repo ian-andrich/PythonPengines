@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/ian-andrich/PythonPengines.svg?branch=master)](https://travis-ci.org/ian-andrich/PythonPengines)
 Python Pengines
 ===============
 
@@ -68,13 +69,13 @@ https://pypi.org/project/prologterms/
     from pengines.Builder import PengineBuilder
     from pengines.Pengine import Pengine
     from prologterms import TermGenerator, PrologRenderer, Program, Var
-    
+
     P = TermGenerator()
     X = Var('X')
     Y = Var('Y')
     Z = Var('Z')
     R = PrologRenderer()
-    
+
     p = Program(
         P.ancestor(X,Y) <= (P.parent(X,Z), P.ancestor(Z,Y)),
         P.ancestor(X,Y) <= P.parent(X,Y),
@@ -82,9 +83,9 @@ https://pypi.org/project/prologterms/
         P.parent('b','c'),
         P.parent('c','d')
     )
-    
+
     q = P.ancestor(X,Y)
-    
+
     factory = PengineBuilder(urlserver="http://localhost:4242",
                              srctext=R.render(p),
                              ask=R.render(q))
