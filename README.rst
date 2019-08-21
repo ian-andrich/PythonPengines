@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/ian-andrich/PythonPengines.svg?branch=master)](https://travis-ci.org/ian-andrich/PythonPengines)
+.. image:: https://travis-ci.org/ian-andrich/PythonPengines.svg?branch=master
+    :target: https://travis-ci.org/ian-andrich/PythonPengines
 Python Pengines
 ===============
 
