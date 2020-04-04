@@ -7,11 +7,12 @@ from pengines.Query import Query
 import copy
 from urllib.request import Request, urlopen
 import json
+import logging
 import urllib
 
 
 class Pengine(object):
-    def __init__(self, builder=None, slave_limit=-1, debug=False):
+    def __init__(self, builder=None, slave_limit=-1):
         '''
         This Pengine object is used to run one or more queries of the
         Prolog Knowledge base set in the PengineBuilder.  builder::None ||
@@ -24,9 +25,6 @@ class Pengine(object):
         self.availOutput = None
         self.currentQuery = None
         self.state = State("not_created")
-
-        # Initialize debug value, defaulting to False.
-        self.debug = debug
 
         # Handle the builder logic.
         if builder is None:
@@ -42,8 +40,7 @@ class Pengine(object):
             self.state.current_state = "destroy"
             raise PengineNotReadyException("Pengine could not be created!!")
 
-        if self.debug:
-            print("Initialization complete.")
+        logging.debug("Initialization complete.")
         return None
 
     def ask(self, query):
@@ -58,11 +55,10 @@ class Pengine(object):
             IOError raised if query cannot be created, or server cannot be
             contacted
         '''
-        if self.debug:
-            print("Starting the call to ask.")
-            print("Current state is {}".format(self.state.current_state))
+        logging.debug("Starting the call to ask.")
+        logging.debug("Current state is {}".format(self.state.current_state))
         self.currentQuery = Query(self, query, False)
-        print("Call to ask is complete")
+        logging.info("Call to ask is complete")
         return self.currentQuery
 
     def doAsk(self, query):
@@ -88,18 +84,15 @@ class Pengine(object):
         Modifies state -- to "idle" if created successfully.  Else "destroy"
         '''
         assert self.state.current_state == "not_created"
-        if self.debug:
-            print("Starting call.")
+        logging.debug("Starting call.")
         # Post the create request.
         url = self.po.getActualURL("create")
         contentType = "application/json"
         body = self.po.getRequestBodyCreate()
-        if self.debug:
-            print("Starting post request with URL {0}, content_type: {1}"\
+        logging.debug("Starting post request with URL {0}, content_type: {1}"\
                   ", and body: {2}".format(url, contentType, body))
         response = self.penginePost(url, contentType, body)
-        if self.debug:
-            print(response)
+        logging.debug(str(response))
 
         # Begin setting various attributes.
 
@@ -142,8 +135,7 @@ class Pengine(object):
         Parameters:
             query :: Query the query object to continue providing data to.
         '''
-        if self.debug:
-            print("pengines.Pengine().doNext is firing with query ", query)
+        logging.debug("pengines.Pengine().doNext is firing with query {}".format(query))
         # ToDo assert self.state.current_state == "ask"
         if query != self.currentQuery:
             raise PengineNotReadyException("Cannot advance more than one query -\
@@ -152,8 +144,7 @@ class Pengine(object):
         url = self.po.getActualURL("send", self.getID())
         contentType = "application/x-prolog; charset=UTF-8"
         body = self.po.getRequestBodyNext()
-        if self.debug:
-            print("url: {0}; body: {2}; contentType: {1}".format(url,
+        logging.debug("url: {0}; body: {2}; contentType: {1}".format(url,
                                                             contentType,
                                                             body))
         string_response_object = self.penginePost(url, contentType, body)
@@ -215,8 +206,7 @@ class Pengine(object):
         Return: response_dict::dict -> A dict representing the JSON encoded response.
         Errors: IOError -> If there is a problem posting, an IOError is raised.
         '''
-        if self.debug:
-            print("Starting Post request.")
+        logging.debug("Starting Post request.")
         # Set up request header
         header = dict()
         header["User-Agent"] = "PythonPengine"
@@ -233,18 +223,16 @@ class Pengine(object):
             raise TypeError("Don't know how to handle body parameter of type\
                             {}").format(type(body))
 
-        if self.debug:
-            print("URL is: ", url)
-            print("Data (body) : ", body_utf8)
-            print("Headers: ", header)
+        logging.debug("URL is: {}".format(url))
+        logging.debug("Data (body) : {}".format(body_utf8))
+        logging.debug("Headers: {}".format(header))
         try:
             # Send Post Request -- catch errors and close
             request_object = Request(url, data=body_utf8, headers=header)
             response = urlopen(request_object)
             response_string_utf8 = response.read()
             response_string = response_string_utf8.decode("utf-8")
-            if self.debug:
-                print("response_string is :", response_string)
+            logging.debug("response_string is : {}".format(response_string))
             response_dict = json.JSONDecoder().decode(response_string)
             # Catch bad status codes
             status = response.status
@@ -265,13 +253,11 @@ class Pengine(object):
             json.JSONDecodeError
             SyntaxError
         '''
-        if self.debug:
-            print("pengines.Pengine().handleAnswer({})".format(answer))
+        logging.debug("pengines.Pengine().handleAnswer({})".format(answer))
         try:
             if "event" in answer:
                 event_val = answer["event"]
-                if self.debug:
-                    print("pengine.Pengine().handleAnswer reports {}".format(event_val))
+                logging.debug("pengine.Pengine().handleAnswer reports {}".format(event_val))
                 # Handle "success" switch
                 if event_val == "success":
                     if "data" in answer:
