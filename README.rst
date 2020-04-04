@@ -35,7 +35,6 @@ Create the pengine querying object.
 ::
 
     pengine = Pengine(builder=pengine_builder)
-    pengine.create()
 
 Make your query -- note the lack of ending period -- Pengine performs
 the query like 'ask(member(X, [1,2,3], [])).'
@@ -43,7 +42,7 @@ the query like 'ask(member(X, [1,2,3], [])).'
 ::
 
     query = "member(X, [1,2,3])"
-    pengine.ask(query)
+    pengine.doAsk(pengine.ask(query))
     print(pengine.currentQuery.availProofs)
 
 Iterate through the proofs like this:
@@ -53,6 +52,17 @@ Iterate through the proofs like this:
     while pengine.currentQuery.hasMore:
         pengine.doNext(pengine.currentQuery)
         print(pengine.currentQuery.availProofs)
+
+Alternatively, the query can be provided to the builder:
+
+::
+
+    src_pl = "foo(a).\nfoo(b).\nfoo(c)."
+    query = "foo(X)"
+    factory = PengineBuilder(urlserver="http://localhost:4242", destroy=False, srctext=src_pl, ask=query)
+    pengine = Pengine(builder=factory)
+    results = pengine.currentQuery.availProofs
+    print(results)
 
 prologterms library
 -------------------
