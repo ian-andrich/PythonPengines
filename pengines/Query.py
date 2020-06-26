@@ -1,4 +1,6 @@
 import json
+import logging
+
 '''
 This library implements the basic logic for the Pengine classes.
     - PengineBuilder: An interface for Pengine objects.
@@ -19,8 +21,7 @@ class Query(object):
     '''
     def __init__(self, pengine, ask, queryMaster=True):
         '''pengine :: Pengine, ask :: String, queryMaster :: Boolean'''
-        if pengine.debug:
-            print("Initializing query with query: {}".format(ask))
+        logging.debug("Initializing query with query: {}".format(ask))
         self.availProofs = []
         self.hasMore = True
         self.pengine = pengine
@@ -38,7 +39,7 @@ class Query(object):
 
     def __iter__(self):
         return self
-    
+
     def __next__(self):
         p = self.pengine
         if self.availProofs != []:

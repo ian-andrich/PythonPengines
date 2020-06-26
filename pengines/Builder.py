@@ -14,8 +14,7 @@ class PengineBuilder(object):
                  srctext=None,
                  srcurl=None,
                  format_type="json",
-                 alias=None,
-                 debug=False):
+                 alias=None):
         self.alias = alias
         self.application = application
         self.ask = ask
@@ -26,7 +25,6 @@ class PengineBuilder(object):
         self.srctext = srctext
         self.srcurl = srcurl
         self.request_body = self.getRequestBodyCreate()
-        self.debug = False
 
     def getRequestBodyCreate(self):
         '''
@@ -52,7 +50,7 @@ class PengineBuilder(object):
 
         if self.ask is not None:
             data["ask"] = self.ask
-            
+
         if self.application is not None:
             data["application"] = self.application
 
@@ -124,7 +122,7 @@ class PengineBuilder(object):
         id::String -> The id of the pengine in question.
         '''
         # Verify server url is set, otherwise raise PengineNotReadyException
-        print("_getActualURL is firing.")
+        logging.debug("_getActualURL is firing.")
         if self.urlserver is None:
             raise PengineNotReadyException("Cannot get actual URL without \
                                            setting the server")
@@ -136,7 +134,7 @@ class PengineBuilder(object):
 
         relative = "pengine/{0}?format=json&id={1}".format(action, id_)
         url = urlserver + relative
-        print("_getActualURL is returning {}".format(url))
+        logging.info("_getActualURL is returning {}".format(url))
         return url
 
     def getRequestBodyNext(self):

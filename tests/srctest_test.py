@@ -10,6 +10,11 @@ import unittest
 from pengines.Builder import PengineBuilder
 from pengines.Pengine import Pengine
 
+from tests.log_testing import log_tests
+import logging
+
+log_tests(logging.DEBUG)
+
 class PenginesTestCase(unittest.TestCase):
 
     def test_member(self):
@@ -18,7 +23,7 @@ class PenginesTestCase(unittest.TestCase):
         """
         q = "member(X,[1,2,3])"
         factory = PengineBuilder(urlserver="http://localhost:4242", destroy=False, ask=q)
-        pengine = Pengine(builder=factory, debug=True)
+        pengine = Pengine(builder=factory)
         results = pengine.currentQuery.availProofs
         print(results)
         self.assertTrue(len(results) == 3)
@@ -33,7 +38,7 @@ class PenginesTestCase(unittest.TestCase):
         src = "foo(a).\nfoo(b).\nfoo(c)."
         q = "foo(X)"
         factory = PengineBuilder(urlserver="http://localhost:4242", destroy=False, srctext=src, ask=q)
-        pengine = Pengine(builder=factory, debug=True)
+        pengine = Pengine(builder=factory)
         results = pengine.currentQuery.availProofs
         print(results)
         self.assertTrue(len(results) == 3)
@@ -48,7 +53,7 @@ class PenginesTestCase(unittest.TestCase):
         src = "foo(a).\nfoo(b).\nfoo(c)."
         q = "foo(X)"
         factory = PengineBuilder(urlserver="http://localhost:4242", destroy=False, srctext=src, chunk=1, ask=q)
-        pengine = Pengine(builder=factory, debug=True)
+        pengine = Pengine(builder=factory)
         all_results = []
         results = pengine.currentQuery.availProofs
         print('INIT Results={}'.format(results))
@@ -71,7 +76,7 @@ class PenginesTestCase(unittest.TestCase):
 
         for chunk in chunk_sizes:
             factory = PengineBuilder(urlserver="http://localhost:4242", destroy=False, chunk=chunk, ask=q)
-            pengine = Pengine(builder=factory, debug=True)
+            pengine = Pengine(builder=factory)
             results = []
             for r in pengine.currentQuery:
                 print('ITER={}'.format(r))
